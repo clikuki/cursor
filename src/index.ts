@@ -1,134 +1,180 @@
-const Engine = Matter.Engine;
-const Render = Matter.Render;
-const Runner = Matter.Runner;
-const Bodies = Matter.Bodies;
-const Composite = Matter.Composite;
+import kaybee from './kaybee.js';
 
-const engine = Engine.create();
+const { Engine, Render, Runner, Bodies, Composite, Body, Collision } = Matter;
 
-const boxA = Bodies.rectangle(400, 200, 80, 80);
-const boxB = Bodies.rectangle(450, 50, 80, 80);
-const ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
-Composite.add(engine.world, [boxA, boxB, ground]);
-
-// runner
+const engine = Engine.create({
+	gravity: {
+		// y: 0,
+	},
+});
 const runner = Runner.create();
-Runner.run(runner, engine);
-
-// renderer
 const render = Render.create({
 	element: document.body,
 	engine: engine,
 });
+
+const cursor = (() => {
+	const position = {
+		x: 400,
+		y: 400,
+	};
+	const headWidth = 20;
+	const headHeight = 30;
+	const tailWidth = 6;
+	const tailHeight = 10;
+
+	const head = Bodies.fromVertices(position.x, position.y, [
+		[
+			// { x: 0, y: -headHeight / 2 },
+			// { x: -headWidth / 2, y: headHeight / 2 },
+			// { x: headWidth / 2, y: headHeight / 2 },
+			{ x: headHeight / 2, y: 0 },
+			{ x: -headHeight / 2, y: headWidth / 2 },
+			{ x: -headHeight / 2, y: -headWidth / 2 },
+		],
+	]);
+	const tail = Bodies.rectangle(
+		// position.x,
+		// position.y + headHeight / 2,
+		position.x - headHeight / 2,
+		position.y,
+		tailHeight,
+		tailWidth,
+	);
+
+	const cursor = Body.create({
+		label: 'Cursor',
+		parts: [head, tail],
+		// angle: -Math.PI / 2,
+	});
+	Body.setAngle(cursor, -Math.PI / 4);
+	return cursor;
+})();
+
+// World bounds
+const edgeBoundWidth = 100;
+const edgeBounds = [
+	Bodies.rectangle(
+		render.bounds.min.x + render.bounds.max.x / 2,
+		render.bounds.min.y + render.bounds.max.y + edgeBoundWidth / 2,
+		render.bounds.min.x + render.bounds.max.x,
+		edgeBoundWidth,
+		{
+			isStatic: true,
+		},
+	),
+	Bodies.rectangle(
+		render.bounds.min.x + render.bounds.max.x / 2,
+		render.bounds.min.x - edgeBoundWidth / 2,
+		render.bounds.max.x,
+		edgeBoundWidth,
+		{
+			isStatic: true,
+		},
+	),
+	Bodies.rectangle(
+		render.bounds.min.x - edgeBoundWidth / 2,
+		render.bounds.min.y + render.bounds.max.y / 2,
+		edgeBoundWidth,
+		render.bounds.max.x,
+		{ isStatic: true },
+	),
+	Bodies.rectangle(
+		render.bounds.min.x + render.bounds.max.x + edgeBoundWidth / 2,
+		render.bounds.min.y + render.bounds.max.y / 2,
+		edgeBoundWidth,
+		render.bounds.max.x,
+		{
+			isStatic: true,
+		},
+	),
+];
+
+const trigger = Bodies.rectangle(400, 300, 500, 50, {
+	isSensor: true,
+	isStatic: true,
+});
+
+const balls = new Array(10).fill(0).map(() => {
+	const ball = Bodies.circle(
+		Math.random() * render.bounds.max.x,
+		Math.random() * render.bounds.max.y,
+		Math.random() * 50,
+		{
+			frictionAir: 0,
+			friction: 0,
+			restitution: 1,
+		},
+	);
+	Body.applyForce(ball, ball.position, {
+		x: Math.random() * 0.1,
+		y: Math.random() * 0.1,
+	});
+	return ball;
+});
+
+Composite.add(engine.world, [cursor, trigger, ...edgeBounds, ...balls]);
+
+Runner.run(runner, engine);
 Render.run(render);
 
-// const canvas = document.createElement('canvas');
-// const ctx = canvas.getContext('2d')!;
-// document.body.appendChild(canvas);
+function boost(backwards = false) {
+	const magnitude = 0.006 * (backwards ? -1 : 1);
+	Body.applyForce(cursor, cursor.position, {
+		x: Math.cos(cursor.angle) * magnitude,
+		y: Math.sin(cursor.angle) * magnitude,
+	});
+}
 
-// canvas.width = 800;
-// canvas.height = 500;
+// render.canvas.addEventListener('click', (ev) => {
+// 	boost(ev.button === 2 ? true : false);
+// });
 
-// type Vec = [x: number, y: number];
-// class Polygon {
-// 	pos: Vec = [100, 100];
-// 	vel: Vec = [0, 0];
-// 	acc: Vec = [0, 0];
-// 	hw: number;
-// 	hh: number;
-// 	dampening = 0.6;
-// 	points: Vec[];
-// 	constructor(points: Vec[]) {
-// 		[this.hw, this.hh] = points
-// 			.reduce(
-// 				([xList, yList], [x, y]): [number[], number[]] => {
-// 					xList.push(x);
-// 					yList.push(y);
-// 					return [xList, yList];
-// 				},
-// 				[[], []] as [number[], number[]],
-// 			)
-// 			.map((list) => {
-// 				const min = Math.min(...list);
-// 				return (Math.max(...list) - min) / 2 + min;
-// 			});
-// 		this.points = points.map(([x, y]) => [x - this.hw, y - this.hh]);
-// 	}
-// 	show(ctx: CanvasRenderingContext2D) {
-// 		ctx.save();
-// 		ctx.translate(this.pos[0], this.pos[1]);
+kaybee.start({
+	renameKeys: true,
+	onKeyDown({ key }) {
+		switch (key) {
+			case 'space':
+			case 'w':
+				boost();
+				break;
 
-// 		ctx.strokeStyle = 'black';
-// 		ctx.fillStyle = 'white';
-// 		const path = new Path2D();
-// 		this.points.forEach(([px, py], i) => {
-// 			if (!i) path.moveTo(px, py);
-// 			else path.lineTo(px, py);
+			case 's':
+				boost(true);
+				break;
+
+			case 'a':
+			case 'd':
+				{
+					const roundedYVel = Math.round(cursor.velocity.y);
+					const isOnGround = roundedYVel <= 2 && roundedYVel >= -2;
+					const strength = (Math.PI / 4) * (isOnGround ? 0.2 : 0.07);
+					const direction = key === 'a' ? -1 : 1;
+					const angle = strength * direction;
+					Body.setAngularVelocity(cursor, angle);
+				}
+				break;
+
+			default:
+				break;
+		}
+	},
+});
+
+(function loop() {
+	requestAnimationFrame(loop);
+	if (Collision.collides(trigger, cursor)) {
+		engine.timing.timeScale = 0.3;
+		console.log('Trigger hit');
+	} else engine.timing.timeScale = 1;
+})();
+
+// (function inputLoop() {
+// 	requestAnimationFrame(inputLoop);
+// 	if (kb.getKey('space')) {
+// 		Body.applyForce(cursor, cursor.position, {
+// 			x: 0,
+// 			y: -0.005,
 // 		});
-// 		path.closePath();
-// 		ctx.fill(path);
-// 		ctx.stroke(path);
-
-// 		// // show position
-// 		// ctx.fillStyle = 'red';
-// 		// ctx.beginPath();
-// 		// ctx.ellipse(0, 0, 2, 2, 0, 0, Math.PI * 2);
-// 		// ctx.fill();
-
-// 		ctx.restore();
-// 	}
-// 	update() {
-// 		this.pos[0] += this.vel[0];
-// 		this.pos[1] += this.vel[1];
-// 		this.vel[0] += this.acc[0];
-// 		this.vel[1] += this.acc[1];
-// 		this.acc = [0, 0];
-// 	}
-// 	edges() {
-// 		if (this.pos[0] - this.hw < 0) {
-// 			this.pos[0] = this.hw;
-// 			this.vel[0] = Math.floor(this.vel[0] * -this.dampening);
-// 		} else if (this.pos[0] + this.hh >= canvas.width) {
-// 			this.pos[0] = canvas.width - this.hw;
-// 			this.vel[0] = Math.floor(this.vel[0] * -this.dampening);
-// 		}
-
-// 		if (this.pos[1] - this.hh < 0) {
-// 			this.pos[1] = this.hh;
-// 			this.vel[1] = Math.floor(this.vel[1] * -this.dampening);
-// 		} else if (this.pos[1] + this.hh >= canvas.height) {
-// 			this.pos[1] = canvas.height - this.hh;
-// 			this.vel[1] = Math.floor(this.vel[1] * -this.dampening);
-// 		}
-// 	}
-// 	addForce(vec: Vec) {
-// 		this.acc[0] += vec[0];
-// 		this.acc[1] += vec[1];
-// 	}
-// }
-
-// const cursor = new Polygon([
-// 	[0, 0],
-// 	[-10, 27],
-// 	[-3, 27],
-// 	[-3, 35],
-// 	[3, 35],
-// 	[3, 27],
-// 	[10, 27],
-// ]);
-
-// let then = Date.now();
-// const fpsInterval = 1000 / 60;
-// (function loop() {
-// 	requestAnimationFrame(loop);
-// 	const now = Date.now();
-// 	const elapsed = now - then;
-// 	if (elapsed > fpsInterval) {
-// 		then = now;
-// 		canvas.width = canvas.width;
-// 		cursor.show(ctx);
-// 		cursor.update();
-// 		cursor.addForce([0, 1]);
-// 		cursor.edges();
 // 	}
 // })();
