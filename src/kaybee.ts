@@ -1,5 +1,4 @@
-// Created by: https://github.com/junebloom
-// Copied from: https://github.com/junebloom/kaybee
+// Repository: https://github.com/junebloom/kaybee
 
 export function normalizeKeyName(key: string): string {
 	return key

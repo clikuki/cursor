@@ -1,7 +1,8 @@
 body {
 	margin: 0;
+	min-height: 100vh;
+	overflow: hidden;
 }
 canvas {
-	/* border: 2px solid black; */
 	cursor: none;
 }

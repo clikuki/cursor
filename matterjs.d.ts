@@ -3589,10 +3589,10 @@ declare namespace Matter {
 		 * For parsing SVG paths, see `Svg.pathToVertices`.
 		 * @method fromPath
 		 * @param {string} path
-		 * @param {Body} body
+		 * @param {Body} [body]
 		 * @returns {Vertices} vertices
 		 */
-		static fromPath(path: string, body: Body): Array<Vector>;
+		static fromPath(path: string, body?: Body): Array<Vector>;
 
 		/**
 		 * Returns the moment of inertia (second moment of area) of the set of vertices given the total mass.
