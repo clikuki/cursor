@@ -1,0 +1,7 @@
+survival game
+- The player has to navigate the cursor through a series of increasingly challenging environments while avoiding obstacles or enemies
+- The difficult and unpredictable movement of the cursor could add an extra layer of difficulty and challenge to the game, as the player has to carefully plan their movements and react quickly to changing situations
+- Could collect power ups, coins, gems through game to unlock stuff or get temporary buffs(or debuff!)
+- Bosses would have to be simple enough to be dodged with cursor and have obvious enough patterns
+- Possible mechanic: slow down time, since cursor is hard to control and getting that opportunity to move carefully could help
+- Maybe limit the amount of boosts, then restore when hitting ground? currently player can fly, which might be undesirable
