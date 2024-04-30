@@ -53,7 +53,7 @@ export class Cursor {
 			y,
 			dimensions.tail.h,
 			dimensions.tail.w,
-			{ render: { fillStyle: renderStyles.fillStyle } },
+			{ render: { fillStyle: renderStyles.fillStyle }, isSensor: true },
 		);
 
 		this.body = Body.create({
